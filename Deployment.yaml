@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: env-runtime
+  name: reactenvruntime
+  labels:
+    app: reactenruntime
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: reactenruntime
+  template:
+    metadata:
+      labels:
+        app: reactenruntime
+    spec:      
+      containers:
+        - name: reactenruntime          
+          image: therealmanny/reactenvruntime
+          resources:
+            limits:
+              cpu: "2"
+              memory: 1024Mi
+            requests:
+              cpu: 200m
+              memory: 128Mi
+          ports:
+          - containerPort: 80    
+          env:
+          - name: FRAMEWORK
+            value: Create React App
+          - name: VERSION
+            value: "1.0.0"
+          - name: SSR
+            value: "false"
+          - name: FOO
+            value: 'bar'
+          - name: BAR
+            value: 'foo'
+          - name: API_HOST
+            value: https://jsonplaceholder.typicode.com
+          - name: TESTING
+            value: Itworked
+          - name: SECRET
+            value: "42"
