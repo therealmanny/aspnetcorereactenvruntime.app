@@ -1,7 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS devbase
 
 FROM devbase AS build
-RUN curl -sL https://deb.nodesource.com/setup_16.x |  bash -
+RUN curl -sL https://deb.nodesource.com/setup_12.x |  bash -
+#RUN curl -sL https://deb.nodesource.com/setup_14.x |  bash -
 RUN apt-get install -y nodejs
 
 ARG publishProject="reactenvruntime.app"
@@ -36,17 +37,14 @@ RUN echo "*** Publishing ${publishProject} ***" && \
 #RUN npm run test:ci --prefix ${publishProject}/ClientApp --if-present
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS final
-RUN curl -sL https://deb.nodesource.com/setup_16.x |  bash -
-RUN apt-get update
-RUN apt-get install -y nodejs
-RUN apt-get install -y npm
 WORKDIR /app
+COPY --from=build ["/usr/bin/node", "/usr/bin"]
+COPY --from=build ["/usr/lib/node_modules", "/usr/lib/node_modules"]
+RUN ln -s /usr/lib/node_modules/npm/bin/npm-cli.js /usr/bin/npm
+RUN ln -s /usr/lib/node_modules/npm/bin/npx-cli.js /usr/bin/npx
 #COPY --from=build ["/src/TestResults", "/testresults"]
-RUN npm i @beam-australia/react-env
+# Depend bot is not responsible for this
+RUN npm i @beam-australia/react-env@3.0.8
 COPY --from=build ["/app/publish", ""]
 EXPOSE 80
-# ENTRYPOINT ["npx", "react-env", "--path ClientApp/.env", "--dest ClientApp/build", "--"]
-# ENTRYPOINT ["npx", "react-env --path ClientApp/.env --dest ClientApp/build"]
 ENTRYPOINT exec npx react-env --path ClientApp/.env.template --dest ClientApp/build -- dotnet reactenvruntime.app.dll
-# ENTRYPOINT ["dotnet", "reactenvruntime.app.dll"]
-# CMD ["dotnet", "reactenvruntime.app.dll"]
